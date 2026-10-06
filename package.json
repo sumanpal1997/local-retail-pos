@@ -1,0 +1,18 @@
+{
+  "name": "local-retail-pos",
+  "version": "1.0.0",
+  "description": "Cloud POS, Inventory & Khata Ledger SaaS for Local Retailers",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "dev:client": "npm run dev --prefix client",
+    "dev:server": "npm run dev --prefix server",
+    "client": "npm run dev --prefix client",
+    "server": "npm run dev --prefix server",
+    "build": "npm run build --prefix client",
+    "start": "node server/src/index.js",
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client",
+    "render-build": "npm install --prefix server && npm install --prefix client && npm run build --prefix client"
+  }
+}
