@@ -108,6 +108,7 @@ exports.createOrder = async (req, res) => {
             amount: Number(grandTotal),
             orderId: order._id,
             notes: `Invoice #${invoiceNumber}`,
+            balanceAfter: customer.creditBalance,
             date: new Date()
           }
         }

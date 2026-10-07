@@ -16,6 +16,7 @@ import {
   fetchCustomers, 
   saveCustomer, 
   recordCustomerPayment, 
+  recordCustomerCredit,
   submitOrder, 
   fetchOrders, 
   getStoreProfile,
@@ -145,8 +146,14 @@ export default function App() {
     setCustomers(updated);
   };
 
-  const handleRecordPayment = async (id, amount, mode) => {
-    await recordCustomerPayment(id, amount, mode);
+  const handleRecordPayment = async (id, amount, mode, notes, date) => {
+    await recordCustomerPayment(id, amount, mode, notes, date);
+    const updated = await fetchCustomers();
+    setCustomers(updated);
+  };
+
+  const handleRecordCredit = async (id, amount, notes, date) => {
+    await recordCustomerCredit(id, amount, notes, date);
     const updated = await fetchCustomers();
     setCustomers(updated);
   };
@@ -228,6 +235,7 @@ export default function App() {
             customers={customers}
             onAddCustomer={handleAddCustomer}
             onRecordPayment={handleRecordPayment}
+            onRecordCredit={handleRecordCredit}
             storeInfo={storeInfo}
           />
         )}

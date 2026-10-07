@@ -18,6 +18,13 @@ const customerTransactionSchema = new mongoose.Schema({
     type: String, 
     default: '' 
   },
+  paymentMode: {
+    type: String,
+    default: 'Cash'
+  },
+  balanceAfter: {
+    type: Number
+  },
   date: { 
     type: Date, 
     default: Date.now 

@@ -9,5 +9,6 @@ router.get('/', customerController.getCustomers);
 router.get('/:id', customerController.getCustomerById);
 router.post('/', customerController.createCustomer);
 router.post('/:id/pay', customerController.recordPayment);
+router.post('/:id/credit', customerController.recordCredit);
 
 module.exports = router;

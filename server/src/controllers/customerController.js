@@ -67,7 +67,7 @@ exports.createCustomer = async (req, res) => {
 exports.recordPayment = async (req, res) => {
   try {
     const { id } = req.params;
-    const { amount, notes, paymentMode } = req.body;
+    const { amount, notes, paymentMode, date } = req.body;
 
     if (!amount || Number(amount) <= 0) {
       return res.status(400).json({ message: 'A positive payment amount is required' });
@@ -80,12 +80,15 @@ exports.recordPayment = async (req, res) => {
 
     const payAmount = Number(amount);
     customer.creditBalance = Math.max(0, customer.creditBalance - payAmount);
+    const transactionDate = date ? new Date(date) : new Date();
 
     customer.transactions.push({
       type: 'PAYMENT_RECEIVED',
       amount: payAmount,
+      paymentMode: paymentMode || 'Cash',
       notes: notes || `Payment received via ${paymentMode || 'Cash'}`,
-      date: new Date()
+      balanceAfter: customer.creditBalance,
+      date: transactionDate
     });
 
     await customer.save();
@@ -96,5 +99,42 @@ exports.recordPayment = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: 'Error recording payment', error: error.message });
+  }
+};
+
+exports.recordCredit = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { amount, notes, date } = req.body;
+
+    if (!amount || Number(amount) <= 0) {
+      return res.status(400).json({ message: 'A positive credit amount is required' });
+    }
+
+    const customer = await Customer.findOne({ _id: id, storeId: req.storeId });
+    if (!customer) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+
+    const creditAmount = Number(amount);
+    customer.creditBalance += creditAmount;
+    const transactionDate = date ? new Date(date) : new Date();
+
+    customer.transactions.push({
+      type: 'PURCHASE_CREDIT',
+      amount: creditAmount,
+      notes: notes || 'Credit purchase entry',
+      balanceAfter: customer.creditBalance,
+      date: transactionDate
+    });
+
+    await customer.save();
+
+    res.json({
+      message: 'Credit recorded successfully',
+      customer
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error recording credit', error: error.message });
   }
 };

@@ -150,7 +150,9 @@ export const updateStoreProfile = (newProfile) => {
 // API Services with automatic offline/local storage fallback
 export const fetchProducts = async () => {
   try {
-    const res = await fetch(apiUrl('/api/products'));
+    const res = await fetch(apiUrl('/api/products'), {
+      headers: getAuthHeaders()
+    });
     if (res.ok) return await res.json();
   } catch (err) {
     // Backend offline, fallback to local storage
@@ -162,7 +164,7 @@ export const saveProduct = async (product) => {
   try {
     const res = await fetch(apiUrl('/api/products'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(product)
     });
     if (res.ok) {
@@ -194,7 +196,7 @@ export const updateProductStock = async (id, stockDelta) => {
   try {
     const res = await fetch(apiUrl(`/api/products/${id}`), {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ currentStock: newStock })
     });
     if (res.ok) {
@@ -216,7 +218,9 @@ export const updateProductStock = async (id, stockDelta) => {
 
 export const fetchCustomers = async () => {
   try {
-    const res = await fetch(apiUrl('/api/customers'));
+    const res = await fetch(apiUrl('/api/customers'), {
+      headers: getAuthHeaders()
+    });
     if (res.ok) return await res.json();
   } catch (err) {}
   return getLocalData(LOCAL_STORAGE_KEY_CUSTOMERS, INITIAL_CUSTOMERS);
@@ -226,7 +230,7 @@ export const saveCustomer = async (customer) => {
   try {
     const res = await fetch(apiUrl('/api/customers'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(customer)
     });
     if (res.ok) {
@@ -247,12 +251,17 @@ export const saveCustomer = async (customer) => {
   return newCustomer;
 };
 
-export const recordCustomerPayment = async (customerId, amount, paymentMode) => {
+export const recordCustomerPayment = async (customerId, amount, paymentMode, notes, date) => {
   try {
     const res = await fetch(apiUrl(`/api/customers/${customerId}/pay`), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: Number(amount), paymentMode })
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        amount: Number(amount),
+        paymentMode: paymentMode || 'Cash',
+        notes: notes || '',
+        date: date || new Date().toISOString()
+      })
     });
     if (res.ok) {
       const data = await res.json();
@@ -264,11 +273,49 @@ export const recordCustomerPayment = async (customerId, amount, paymentMode) => 
   const cust = customers.find(c => c._id === customerId);
   if (cust) {
     cust.creditBalance = Math.max(0, cust.creditBalance - Number(amount));
-    cust.transactions.unshift({
+    cust.transactions = cust.transactions || [];
+    cust.transactions.push({
       type: 'PAYMENT_RECEIVED',
       amount: Number(amount),
-      notes: `Received via ${paymentMode}`,
-      date: new Date().toISOString()
+      paymentMode: paymentMode || 'Cash',
+      notes: notes || `Received via ${paymentMode || 'Cash'}`,
+      balanceAfter: cust.creditBalance,
+      date: date ? new Date(date).toISOString() : new Date().toISOString()
+    });
+    localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOMERS, JSON.stringify(customers));
+    return cust;
+  }
+  return null;
+};
+
+export const recordCustomerCredit = async (customerId, amount, notes, date) => {
+  try {
+    const res = await fetch(apiUrl(`/api/customers/${customerId}/credit`), {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        amount: Number(amount),
+        notes: notes || 'Credit purchase',
+        date: date || new Date().toISOString()
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.customer;
+    }
+  } catch (err) {}
+
+  const customers = getLocalData(LOCAL_STORAGE_KEY_CUSTOMERS, INITIAL_CUSTOMERS);
+  const cust = customers.find(c => c._id === customerId);
+  if (cust) {
+    cust.creditBalance = (cust.creditBalance || 0) + Number(amount);
+    cust.transactions = cust.transactions || [];
+    cust.transactions.push({
+      type: 'PURCHASE_CREDIT',
+      amount: Number(amount),
+      notes: notes || 'Credit purchase',
+      balanceAfter: cust.creditBalance,
+      date: date ? new Date(date).toISOString() : new Date().toISOString()
     });
     localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOMERS, JSON.stringify(customers));
     return cust;
@@ -280,7 +327,7 @@ export const submitOrder = async (orderData) => {
   try {
     const res = await fetch(apiUrl('/api/orders'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(orderData)
     });
     if (res.ok) {
@@ -329,10 +376,12 @@ export const submitOrder = async (orderData) => {
       customers.push(cust);
     }
     cust.creditBalance += Number(orderData.grandTotal);
-    cust.transactions.unshift({
+    cust.transactions = cust.transactions || [];
+    cust.transactions.push({
       type: 'PURCHASE_CREDIT',
       amount: Number(orderData.grandTotal),
       notes: `Invoice #${invoiceNumber}`,
+      balanceAfter: cust.creditBalance,
       date: new Date().toISOString()
     });
     localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOMERS, JSON.stringify(customers));
@@ -343,7 +392,9 @@ export const submitOrder = async (orderData) => {
 
 export const fetchOrders = async () => {
   try {
-    const res = await fetch(apiUrl('/api/orders'));
+    const res = await fetch(apiUrl('/api/orders'), {
+      headers: getAuthHeaders()
+    });
     if (res.ok) {
       const data = await res.json();
       return data.orders || [];
