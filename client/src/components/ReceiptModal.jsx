@@ -11,10 +11,12 @@ export default function ReceiptModal({ order, storeInfo, onClose }) {
     window.print();
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     try {
       setIsPdfGenerating(true);
-      downloadInvoicePDF(order, storeInfo);
+      await downloadInvoicePDF(order, storeInfo);
+    } catch (err) {
+      console.error('PDF generation error:', err);
     } finally {
       setIsPdfGenerating(false);
     }
@@ -24,6 +26,8 @@ export default function ReceiptModal({ order, storeInfo, onClose }) {
     try {
       setIsPdfGenerating(true);
       await shareInvoiceViaWhatsApp(order, storeInfo);
+    } catch (err) {
+      console.error('WhatsApp share error:', err);
     } finally {
       setIsPdfGenerating(false);
     }

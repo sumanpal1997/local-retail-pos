@@ -55,6 +55,7 @@ export default function KhataLedger({
   // Add customer modal state
   const [isAddCustModalOpen, setIsAddCustModalOpen] = useState(false);
   const [newCust, setNewCust] = useState({ name: '', phone: '', address: '', creditLimit: 5000 });
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
 
   // Always resolve selected customer from props to prevent stale data
   const selectedCustomer = useMemo(() => {
@@ -216,6 +217,30 @@ export default function KhataLedger({
     window.open(url, '_blank');
   };
 
+  const handleDownloadKhataPDF = async () => {
+    if (!selectedCustomer) return;
+    try {
+      setIsPdfLoading(true);
+      await downloadKhataStatementPDF(selectedCustomer, storeInfo);
+    } catch (err) {
+      console.error('Error generating Khata PDF:', err);
+    } finally {
+      setIsPdfLoading(false);
+    }
+  };
+
+  const handleShareKhataWhatsApp = async () => {
+    if (!selectedCustomer) return;
+    try {
+      setIsPdfLoading(true);
+      await shareKhataViaWhatsApp(selectedCustomer, storeInfo);
+    } catch (err) {
+      console.error('Error sharing Khata WhatsApp:', err);
+    } finally {
+      setIsPdfLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Banner & Stats */}
@@ -325,16 +350,18 @@ export default function KhataLedger({
 
                 <div className="flex flex-wrap items-center gap-2">
                   <button
-                    onClick={() => downloadKhataStatementPDF(selectedCustomer, storeInfo)}
-                    className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 px-3 py-1.5 rounded-lg text-xs font-semibold transition"
+                    onClick={handleDownloadKhataPDF}
+                    disabled={isPdfLoading}
+                    className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 px-3 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-60"
                     title="Download Official PDF Statement"
                   >
-                    <Download className="w-3.5 h-3.5 text-slate-600" /> Download PDF
+                    <Download className="w-3.5 h-3.5 text-slate-600" /> {isPdfLoading ? 'Generating...' : 'Download PDF'}
                   </button>
 
                   <button
-                    onClick={() => shareKhataViaWhatsApp(selectedCustomer, storeInfo)}
-                    className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 px-3 py-1.5 rounded-lg text-xs font-semibold transition"
+                    onClick={handleShareKhataWhatsApp}
+                    disabled={isPdfLoading}
+                    className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 px-3 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-60"
                     title="Send PDF Statement on WhatsApp"
                   >
                     <Share2 className="w-3.5 h-3.5" /> Send PDF on WhatsApp
