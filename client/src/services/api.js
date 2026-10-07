@@ -125,12 +125,16 @@ export const logoutUser = () => {
 export const getStoreProfile = () => {
   const user = getCurrentUser();
   if (user && user.storeName) {
-    return user;
+    return {
+      discountPresets: [0, 5, 10],
+      ...user
+    };
   }
   return getLocalData(LOCAL_STORAGE_KEY_STORE, {
     storeName: 'Apna Super Mart',
     ownerName: 'Sunil Kumar',
     phone: '9876500000',
+    discountPresets: [0, 5, 10],
     address: { street: 'Station Road, Market Yard', city: 'Local Town', state: 'WB', pincode: '700001' },
     taxId: '19ABCDE1234F1Z5',
     currencySymbol: '₹',
@@ -142,9 +146,51 @@ export const getStoreProfile = () => {
   });
 };
 
-export const updateStoreProfile = (newProfile) => {
-  localStorage.setItem(LOCAL_STORAGE_KEY_STORE, JSON.stringify(newProfile));
-  return newProfile;
+export const fetchStoreProfile = async () => {
+  try {
+    const res = await fetch(apiUrl('/api/auth/profile'), {
+      headers: getAuthHeaders()
+    });
+    if (res.ok) {
+      const data = await res.json();
+      localStorage.setItem(LOCAL_STORAGE_KEY_STORE, JSON.stringify(data));
+      const curr = getCurrentUser();
+      if (curr) {
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify({ ...curr, ...data }));
+      }
+      return data;
+    }
+  } catch (err) {}
+  return getStoreProfile();
+};
+
+export const updateStoreProfile = async (newProfile) => {
+  try {
+    const res = await fetch(apiUrl('/api/auth/profile'), {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(newProfile)
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const updated = data.store;
+      localStorage.setItem(LOCAL_STORAGE_KEY_STORE, JSON.stringify(updated));
+      const curr = getCurrentUser();
+      if (curr) {
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify({ ...curr, ...updated }));
+      }
+      return updated;
+    }
+  } catch (err) {}
+
+  const current = getStoreProfile();
+  const merged = { ...current, ...newProfile };
+  localStorage.setItem(LOCAL_STORAGE_KEY_STORE, JSON.stringify(merged));
+  const curr = getCurrentUser();
+  if (curr) {
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify({ ...curr, ...merged }));
+  }
+  return merged;
 };
 
 // API Services with automatic offline/local storage fallback

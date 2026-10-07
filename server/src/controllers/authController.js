@@ -109,7 +109,8 @@ exports.login = async (req, res) => {
         address: store.address,
         taxId: store.taxId,
         currencySymbol: store.currencySymbol,
-        receiptSettings: store.receiptSettings
+        receiptSettings: store.receiptSettings,
+        discountPresets: store.discountPresets || [0, 5, 10]
       }
     });
   } catch (error) {
@@ -131,21 +132,26 @@ exports.getProfile = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
-    const { storeName, ownerName, phone, address, taxId, currencySymbol, receiptSettings } = req.body;
+    const { storeName, ownerName, phone, address, taxId, currencySymbol, receiptSettings, discountPresets } = req.body;
+
+    const updateFields = {};
+    if (storeName) updateFields.storeName = storeName;
+    if (ownerName) updateFields.ownerName = ownerName;
+    if (phone) updateFields.phone = phone;
+    if (address) updateFields.address = address;
+    if (taxId !== undefined) updateFields.taxId = taxId;
+    if (currencySymbol) updateFields.currencySymbol = currencySymbol;
+    if (receiptSettings) updateFields.receiptSettings = receiptSettings;
+    if (discountPresets && Array.isArray(discountPresets)) {
+      updateFields.discountPresets = discountPresets
+        .map(n => Math.max(0, Math.min(100, Number(n) || 0)))
+        .filter((val, idx, arr) => arr.indexOf(val) === idx)
+        .sort((a, b) => a - b);
+    }
 
     const store = await Store.findByIdAndUpdate(
       req.storeId,
-      {
-        $set: {
-          storeName,
-          ownerName,
-          phone,
-          address,
-          taxId,
-          currencySymbol,
-          receiptSettings
-        }
-      },
+      { $set: updateFields },
       { new: true }
     ).select('-passwordHash');
 

@@ -41,6 +41,10 @@ const storeSchema = new mongoose.Schema({
     type: String, 
     default: '₹' 
   },
+  discountPresets: {
+    type: [Number],
+    default: [0, 5, 10]
+  },
   receiptSettings: {
     headerMessage: { 
       type: String, 

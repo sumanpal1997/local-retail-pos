@@ -20,6 +20,8 @@ import {
   submitOrder, 
   fetchOrders, 
   getStoreProfile,
+  fetchStoreProfile,
+  updateStoreProfile,
   getCurrentUser,
   logoutUser
 } from './services/api';
@@ -44,7 +46,7 @@ export default function App() {
 
   // Initialize session & data
   const loadStoreData = async () => {
-    const profile = getStoreProfile();
+    const profile = await fetchStoreProfile();
     setStoreInfo(profile);
 
     const [prods, custs, ords] = await Promise.all([
@@ -56,6 +58,12 @@ export default function App() {
     setProducts(prods);
     setCustomers(custs);
     setOrders(ords);
+  };
+
+  const handleUpdateStoreInfo = async (newProfile) => {
+    const saved = await updateStoreProfile(newProfile);
+    setStoreInfo(saved);
+    return saved;
   };
 
   useEffect(() => {
@@ -206,6 +214,7 @@ export default function App() {
             products={products}
             onOrderCompleted={handleOrderCompleted}
             storeInfo={storeInfo}
+            onUpdateStoreInfo={handleUpdateStoreInfo}
           />
         )}
 
