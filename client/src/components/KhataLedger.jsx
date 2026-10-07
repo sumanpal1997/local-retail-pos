@@ -14,8 +14,11 @@ import {
   Wallet, 
   CreditCard, 
   Filter,
-  Check
+  Check,
+  Download,
+  FileText
 } from 'lucide-react';
+import { downloadKhataStatementPDF, shareKhataViaWhatsApp } from '../utils/pdfGenerator';
 
 export default function KhataLedger({ 
   customers = [], 
@@ -321,15 +324,21 @@ export default function KhataLedger({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  {selectedCustomer.creditBalance > 0 && (
-                    <button
-                      onClick={() => sendWhatsAppReminder(selectedCustomer)}
-                      className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 px-3 py-1.5 rounded-lg text-xs font-semibold transition"
-                      title="Send WhatsApp Reminder with EMI breakdown"
-                    >
-                      <Share2 className="w-3.5 h-3.5" /> WhatsApp Statement
-                    </button>
-                  )}
+                  <button
+                    onClick={() => downloadKhataStatementPDF(selectedCustomer, storeInfo)}
+                    className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 px-3 py-1.5 rounded-lg text-xs font-semibold transition"
+                    title="Download Official PDF Statement"
+                  >
+                    <Download className="w-3.5 h-3.5 text-slate-600" /> Download PDF
+                  </button>
+
+                  <button
+                    onClick={() => shareKhataViaWhatsApp(selectedCustomer, storeInfo)}
+                    className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 px-3 py-1.5 rounded-lg text-xs font-semibold transition"
+                    title="Send PDF Statement on WhatsApp"
+                  >
+                    <Share2 className="w-3.5 h-3.5" /> Send PDF on WhatsApp
+                  </button>
 
                   <button
                     onClick={() => {

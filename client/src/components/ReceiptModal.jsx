@@ -1,56 +1,32 @@
-import React from 'react';
-import { Printer, Share2, Check, X, Store, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Printer, Share2, Check, X, FileText, Download } from 'lucide-react';
+import { downloadInvoicePDF, shareInvoiceViaWhatsApp } from '../utils/pdfGenerator';
 
 export default function ReceiptModal({ order, storeInfo, onClose }) {
   if (!order) return null;
+
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
 
   const handlePrint = () => {
     window.print();
   };
 
-  // Generate formatted WhatsApp text receipt
-  const generateWhatsAppMessage = () => {
-    const lines = [];
-    lines.push(`🧾 *${storeInfo?.storeName || 'RETAIL STORE'}*`);
-    if (storeInfo?.address?.city) {
-      lines.push(`📍 ${storeInfo.address.city} | 📞 ${storeInfo.phone || ''}`);
+  const handleDownloadPDF = () => {
+    try {
+      setIsPdfGenerating(true);
+      downloadInvoicePDF(order, storeInfo);
+    } finally {
+      setIsPdfGenerating(false);
     }
-    lines.push(`--------------------------------`);
-    lines.push(`*Invoice:* ${order.invoiceNumber}`);
-    lines.push(`*Date:* ${new Date(order.createdAt).toLocaleString()}`);
-    if (order.customerName && order.customerName !== 'Walk-in Customer') {
-      lines.push(`*Customer:* ${order.customerName} (${order.customerPhone || ''})`);
-    }
-    lines.push(`--------------------------------`);
-    
-    order.items.forEach((item, idx) => {
-      lines.push(`${idx + 1}. ${item.name}`);
-      lines.push(`   ${item.quantity} ${item.unit || 'pcs'} × ₹${item.unitPrice} = *₹${item.totalPrice}*`);
-    });
-
-    lines.push(`--------------------------------`);
-    lines.push(`Subtotal: ₹${order.subtotal}`);
-    if (order.totalDiscount > 0) {
-      lines.push(`Discount: -₹${order.totalDiscount}`);
-    }
-    lines.push(`*Grand Total: ₹${order.grandTotal}*`);
-    lines.push(`*Payment Mode: ${order.paymentMethod}*`);
-    if (order.paymentMethod === 'CREDIT_KHATA') {
-      lines.push(`⚠️ *Added to Customer Khata (Credit)*`);
-    }
-    lines.push(`--------------------------------`);
-    lines.push(`${storeInfo?.receiptSettings?.footerMessage || 'Thank you for shopping local! Visit again.'}`);
-
-    return encodeURIComponent(lines.join('\n'));
   };
 
-  const handleWhatsAppShare = () => {
-    const text = generateWhatsAppMessage();
-    const phone = order.customerPhone ? order.customerPhone.replace(/\D/g, '') : '';
-    const url = phone.length >= 10 
-      ? `https://wa.me/91${phone.slice(-10)}?text=${text}`
-      : `https://wa.me/?text=${text}`;
-    window.open(url, '_blank');
+  const handleWhatsAppShare = async () => {
+    try {
+      setIsPdfGenerating(true);
+      await shareInvoiceViaWhatsApp(order, storeInfo);
+    } finally {
+      setIsPdfGenerating(false);
+    }
   };
 
   return (
@@ -140,6 +116,11 @@ export default function ReceiptModal({ order, storeInfo, onClose }) {
                   <span>Change: ₹{order.paymentDetails.changeReturned}</span>
                 )}
               </div>
+              {order.paymentMethod === 'CREDIT_KHATA' && (
+                <div className="bg-rose-50 border border-rose-200 rounded p-1.5 mt-1 text-[10px] text-rose-700 font-semibold text-center">
+                  Added to Customer Khata Credit
+                </div>
+              )}
             </div>
 
             {/* Footer */}
@@ -150,19 +131,30 @@ export default function ReceiptModal({ order, storeInfo, onClose }) {
           </div>
         </div>
 
-        {/* Action Buttons: Thermal Print & WhatsApp Bill */}
-        <div className="p-4 bg-white border-t border-slate-200 flex flex-col sm:flex-row gap-2.5">
+        {/* Action Buttons: Download PDF, WhatsApp Bill & Thermal Print */}
+        <div className="p-4 bg-white border-t border-slate-200 flex flex-col gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button
+              onClick={handleDownloadPDF}
+              disabled={isPdfGenerating}
+              className="flex-1 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition border border-slate-300"
+            >
+              <Download className="w-4 h-4 text-slate-600" /> Download PDF Bill
+            </button>
+            <button
+              onClick={handleWhatsAppShare}
+              disabled={isPdfGenerating}
+              className="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition shadow-sm shadow-emerald-200"
+            >
+              <Share2 className="w-4 h-4" /> Send PDF on WhatsApp
+            </button>
+          </div>
+
           <button
             onClick={handlePrint}
-            className="flex-1 py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold text-xs flex items-center justify-center gap-2 transition"
+            className="w-full py-2 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold text-xs flex items-center justify-center gap-2 transition"
           >
-            <Printer className="w-4 h-4" /> Print Thermal Receipt
-          </button>
-          <button
-            onClick={handleWhatsAppShare}
-            className="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs flex items-center justify-center gap-2 transition shadow-sm shadow-emerald-200"
-          >
-            <Share2 className="w-4 h-4" /> WhatsApp Digital Bill
+            <Printer className="w-3.5 h-3.5" /> Print Thermal Slip
           </button>
         </div>
       </div>
