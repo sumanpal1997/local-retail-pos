@@ -38,7 +38,6 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/super-admin', superAdminRoutes);
 
 // Serve static client assets in production or when built
-const path = require('path');
 const fs = require('fs');
 const clientDistPath = path.resolve(__dirname, '../../client/dist');
 
