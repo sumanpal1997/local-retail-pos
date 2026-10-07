@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Heart } from 'lucide-react';
 import Navbar from './components/Navbar';
 import LandingPage from './components/LandingPage';
 import AuthModal from './components/AuthModal';
@@ -262,6 +263,30 @@ export default function App() {
           <SuperAdminDashboard />
         )}
       </main>
+
+      {/* Workspace Footer */}
+      <footer className="bg-white border-t border-slate-200 py-3.5 px-4 text-center text-xs text-slate-500 print:hidden mt-auto">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px]">
+          <div className="flex items-center gap-2 text-slate-500">
+            <span className="font-semibold text-slate-700">{storeInfo?.storeName || 'RetailPOS Cloud'}</span>
+            <span>•</span>
+            <span className="text-emerald-600 font-medium flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+              All systems online
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-slate-600 font-medium">
+            <span>Made with</span>
+            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 inline animate-pulse" />
+            <span>by <strong className="text-slate-800 font-bold">Suman</strong></span>
+          </div>
+
+          <div className="text-slate-400">
+            © {new Date().getFullYear()} RetailPOS SaaS
+          </div>
+        </div>
+      </footer>
 
       {/* Completed Order Receipt Modal (Print & WhatsApp) */}
       {completedOrder && (

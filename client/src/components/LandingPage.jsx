@@ -12,7 +12,8 @@ import {
   Zap, 
   Share2, 
   ChevronRight, 
-  WifiOff
+  WifiOff,
+  Heart
 } from 'lucide-react';
 
 export default function LandingPage({ onOpenLogin, onOpenRegister }) {
@@ -607,6 +608,12 @@ export default function LandingPage({ onOpenLogin, onOpenRegister }) {
             <Store className="w-4 h-4 text-emerald-400" />
             <span className="font-bold text-slate-200">RetailPOS Cloud SaaS</span>
             <span>• © {new Date().getFullYear()} All rights reserved.</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-slate-300 font-medium text-xs">
+            <span>Made with</span>
+            <Heart className="w-4 h-4 text-rose-500 fill-rose-500 inline animate-pulse" />
+            <span>by <strong className="text-emerald-400 font-bold">Suman</strong></span>
           </div>
 
           <div className="flex items-center gap-4 text-slate-400">
