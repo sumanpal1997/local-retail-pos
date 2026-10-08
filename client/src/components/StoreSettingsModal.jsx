@@ -32,6 +32,8 @@ export default function StoreSettingsModal({ isOpen, onClose, storeInfo, onUpdat
   const [disablePasswordInput, setDisablePasswordInput] = useState('');
   const [setupDevOtp, setSetupDevOtp] = useState('');
   const [setupMaskedPhone, setSetupMaskedPhone] = useState('');
+  const [setupSmsNotice, setSetupSmsNotice] = useState('');
+  const [setupRealSmsSent, setSetupRealSmsSent] = useState(false);
 
   // Profile Form State
   const [profileData, setProfileData] = useState({
@@ -55,9 +57,11 @@ export default function StoreSettingsModal({ isOpen, onClose, storeInfo, onUpdat
       const res = await requestTwoFactorSetup();
       setSetupMaskedPhone(res.phoneMasked || '');
       setSetupDevOtp(res.devOtp || '');
+      setSetupSmsNotice(res.smsNotice || '');
+      setSetupRealSmsSent(Boolean(res.realSmsSent));
       setSetupStep('otp_sent');
       setOtpInput('');
-      setMessage({ type: 'success', text: `6-digit verification code sent to your mobile ending in ${res.phoneMasked || 'your phone'}` });
+      setMessage({ type: 'success', text: res.message || `Verification code generated for mobile ending in ${res.phoneMasked || 'your phone'}` });
     } catch (err) {
       setMessage({ type: 'error', text: err.message || 'Failed to send verification code' });
     } finally {
@@ -301,17 +305,30 @@ export default function StoreSettingsModal({ isOpen, onClose, storeInfo, onUpdat
                     Enter the 6-digit verification code sent to your registered mobile number ending in <strong className="text-indigo-950">{setupMaskedPhone || 'your phone'}</strong>.
                   </p>
 
-                  {/* Dev OTP Helper */}
+                  {/* Carrier Delivery / Test Helper */}
                   {setupDevOtp && (
-                    <div className="p-2 rounded-lg bg-indigo-100/70 border border-indigo-200 flex items-center justify-between text-[11px]">
-                      <span>📱 Test Code: <strong className="font-mono text-indigo-800">{setupDevOtp}</strong></span>
-                      <button
-                        type="button"
-                        onClick={() => setOtpInput(setupDevOtp)}
-                        className="text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded font-bold"
-                      >
-                        Auto-Fill
-                      </button>
+                    <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-[11px] space-y-1.5 animate-in fade-in">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-amber-900 flex items-center gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                          {setupRealSmsSent ? 'Carrier SMS Dispatched' : 'Live Carrier SMS Notice'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setOtpInput(setupDevOtp)}
+                          className="text-[10px] bg-amber-600 hover:bg-amber-700 text-white font-bold px-2 py-0.5 rounded-lg transition"
+                        >
+                          Auto-Fill Code
+                        </button>
+                      </div>
+                      <div className="text-amber-950 font-medium">
+                        OTP Code: <strong className="font-mono text-base font-extrabold text-amber-900 tracking-wider ml-1">{setupDevOtp}</strong>
+                      </div>
+                      {setupSmsNotice && (
+                        <p className="text-[10px] text-amber-800 leading-tight">
+                          Note: {setupSmsNotice}
+                        </p>
+                      )}
                     </div>
                   )}
 

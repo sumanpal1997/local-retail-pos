@@ -120,7 +120,7 @@ exports.login = async (req, res) => {
       await store.save();
 
       // Dispatch OTP via SMS
-      await smsService.sendOtpSms({
+      const smsResult = await smsService.sendOtpSms({
         phone: store.phone,
         otp,
         purpose: 'login'
@@ -128,10 +128,14 @@ exports.login = async (req, res) => {
 
       return res.json({
         twoFactorRequired: true,
-        message: `Two-Step verification code sent to registered mobile number ending in ${store.phone.slice(-4)}`,
+        message: smsResult.realSmsSent
+          ? `Two-Step verification code sent via SMS to mobile ending in ${store.phone.slice(-4)}`
+          : `Two-Step verification code generated for mobile ending in ${store.phone.slice(-4)}`,
+        realSmsSent: smsResult.realSmsSent,
+        smsNotice: smsResult.realSmsSent ? null : smsResult.failureReason,
         tempToken,
-        phoneMasked: smsService.maskPhoneNumber(store.phone),
-        devOtp: isDev ? otp : undefined
+        phoneMasked: smsResult.phoneMasked,
+        devOtp: (!smsResult.realSmsSent || isDev) ? otp : undefined
       });
     }
 
@@ -242,16 +246,20 @@ exports.resendTwoFactorOtp = async (req, res) => {
     store.twoFactorAttempts = 0;
     await store.save();
 
-    await smsService.sendOtpSms({
+    const smsResult = await smsService.sendOtpSms({
       phone: store.phone,
       otp,
       purpose: 'login'
     });
 
     res.json({
-      message: `A fresh 6-digit code has been sent to your mobile ending in ${store.phone.slice(-4)}`,
-      phoneMasked: smsService.maskPhoneNumber(store.phone),
-      devOtp: isDev ? otp : undefined
+      message: smsResult.realSmsSent
+        ? `A fresh 6-digit code has been sent via SMS to your mobile ending in ${store.phone.slice(-4)}`
+        : `A fresh 6-digit code has been generated for mobile ending in ${store.phone.slice(-4)}`,
+      realSmsSent: smsResult.realSmsSent,
+      smsNotice: smsResult.realSmsSent ? null : smsResult.failureReason,
+      phoneMasked: smsResult.phoneMasked,
+      devOtp: (!smsResult.realSmsSent || isDev) ? otp : undefined
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error resending 2FA OTP', error: error.message });
@@ -287,17 +295,21 @@ exports.forgotPassword = async (req, res) => {
     store.resetPasswordAttempts = 0;
     await store.save();
 
-    await smsService.sendOtpSms({
+    const smsResult = await smsService.sendOtpSms({
       phone: store.phone,
       otp,
       purpose: 'reset_password'
     });
 
     res.json({
-      message: `Password reset verification code sent to your registered mobile ending in ${store.phone.slice(-4)}`,
+      message: smsResult.realSmsSent
+        ? `Password reset code sent via SMS to registered mobile ending in ${store.phone.slice(-4)}`
+        : `Password reset code generated for mobile ending in ${store.phone.slice(-4)}`,
+      realSmsSent: smsResult.realSmsSent,
+      smsNotice: smsResult.realSmsSent ? null : smsResult.failureReason,
       identifier: store.email,
-      phoneMasked: smsService.maskPhoneNumber(store.phone),
-      devOtp: isDev ? otp : undefined
+      phoneMasked: smsResult.phoneMasked,
+      devOtp: (!smsResult.realSmsSent || isDev) ? otp : undefined
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error requesting password reset', error: error.message });
@@ -427,16 +439,20 @@ exports.requestTwoFactorSetup = async (req, res) => {
     store.twoFactorAttempts = 0;
     await store.save();
 
-    await smsService.sendOtpSms({
+    const smsResult = await smsService.sendOtpSms({
       phone: store.phone,
       otp,
       purpose: 'setup_2fa'
     });
 
     res.json({
-      message: `Verification code sent to your mobile ending in ${store.phone.slice(-4)}`,
-      phoneMasked: smsService.maskPhoneNumber(store.phone),
-      devOtp: isDev ? otp : undefined
+      message: smsResult.realSmsSent
+        ? `Verification code sent via SMS to mobile ending in ${store.phone.slice(-4)}`
+        : `Verification code generated for mobile ending in ${store.phone.slice(-4)}`,
+      realSmsSent: smsResult.realSmsSent,
+      smsNotice: smsResult.realSmsSent ? null : smsResult.failureReason,
+      phoneMasked: smsResult.phoneMasked,
+      devOtp: (!smsResult.realSmsSent || isDev) ? otp : undefined
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error sending 2FA setup code', error: error.message });

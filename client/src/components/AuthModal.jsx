@@ -58,6 +58,8 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
   const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
   const [forgotPhoneMasked, setForgotPhoneMasked] = useState('');
   const [forgotDevOtp, setForgotDevOtp] = useState('');
+  const [forgotSmsNotice, setForgotSmsNotice] = useState('');
+  const [forgotRealSmsSent, setForgotRealSmsSent] = useState(false);
 
   // Register Form
   const [registerData, setRegisterData] = useState({
@@ -110,7 +112,9 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
         setTwoFactorData({
           tempToken: res.tempToken,
           phoneMasked: res.phoneMasked,
-          devOtp: res.devOtp || ''
+          devOtp: res.devOtp || '',
+          smsNotice: res.smsNotice || '',
+          realSmsSent: Boolean(res.realSmsSent)
         });
         setOtpDigits(['', '', '', '', '', '']);
         setResendCooldown(60);
@@ -164,7 +168,9 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
       setTwoFactorData(prev => ({
         ...prev,
         phoneMasked: res.phoneMasked || prev.phoneMasked,
-        devOtp: res.devOtp || ''
+        devOtp: res.devOtp || '',
+        smsNotice: res.smsNotice || '',
+        realSmsSent: Boolean(res.realSmsSent)
       }));
       setSuccessMessage('A fresh verification code has been dispatched to your mobile number.');
     } catch (err) {
@@ -228,6 +234,8 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
       const res = await requestPasswordReset({ identifier: forgotIdentifier.trim() });
       setForgotPhoneMasked(res.phoneMasked || '');
       setForgotDevOtp(res.devOtp || '');
+      setForgotSmsNotice(res.smsNotice || '');
+      setForgotRealSmsSent(Boolean(res.realSmsSent));
       setForgotStep(2);
       setResendCooldown(60);
       setSuccessMessage(res.message || 'Verification code sent to your registered mobile number.');
@@ -285,6 +293,8 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
       const res = await requestPasswordReset({ identifier: forgotIdentifier.trim() });
       setResendCooldown(60);
       setForgotDevOtp(res.devOtp || '');
+      setForgotSmsNotice(res.smsNotice || '');
+      setForgotRealSmsSent(Boolean(res.realSmsSent));
       setSuccessMessage('New reset code sent to your mobile phone.');
     } catch (err) {
       setErrorMessage(err.message || 'Failed to resend code');
@@ -520,20 +530,30 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
                 </p>
               </div>
 
-              {/* Dev Simulation Helper Pill */}
+              {/* Dev Simulation / Carrier Notice Helper */}
               {twoFactorData.devOtp && (
-                <div className="p-2.5 rounded-xl bg-indigo-50/70 border border-indigo-200/80 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-indigo-900 text-[11px] font-semibold">
-                    <span className="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></span>
-                    <span>Test OTP: <strong className="font-mono text-indigo-700">{twoFactorData.devOtp}</strong></span>
+                <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-[11px] space-y-1.5 animate-in fade-in">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-amber-900 flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      {twoFactorData.realSmsSent ? 'Carrier SMS Dispatched' : 'Live Carrier SMS Notice'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleAutofill2fa}
+                      className="text-[10px] bg-amber-600 hover:bg-amber-700 text-white font-bold px-2 py-0.5 rounded-lg transition"
+                    >
+                      Auto-Fill Code
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleAutofill2fa}
-                    className="text-[10px] bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-2 py-1 rounded-lg transition"
-                  >
-                    Auto-Fill
-                  </button>
+                  <div className="text-amber-950 font-medium">
+                    OTP Code: <strong className="font-mono text-base font-extrabold text-amber-900 tracking-wider ml-1">{twoFactorData.devOtp}</strong>
+                  </div>
+                  {twoFactorData.smsNotice && (
+                    <p className="text-[10px] text-amber-800 leading-tight">
+                      Note: {twoFactorData.smsNotice}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -668,17 +688,28 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login', init
                   </div>
 
                   {forgotDevOtp && (
-                    <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between text-[11px]">
-                      <span className="text-amber-900 font-semibold">
-                        📱 Test OTP: <strong className="font-mono text-amber-700">{forgotDevOtp}</strong>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setForgotOtp(forgotDevOtp)}
-                        className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-2 py-0.5 rounded-lg text-[10px]"
-                      >
-                        Auto-Fill
-                      </button>
+                    <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-[11px] space-y-1.5 animate-in fade-in">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-amber-900 flex items-center gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                          {forgotRealSmsSent ? 'Carrier SMS Dispatched' : 'Live Carrier SMS Notice'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setForgotOtp(forgotDevOtp)}
+                          className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-2 py-0.5 rounded-lg text-[10px] transition"
+                        >
+                          Auto-Fill Code
+                        </button>
+                      </div>
+                      <div className="text-amber-950 font-medium">
+                        OTP Code: <strong className="font-mono text-base font-extrabold text-amber-900 tracking-wider ml-1">{forgotDevOtp}</strong>
+                      </div>
+                      {forgotSmsNotice && (
+                        <p className="text-[10px] text-amber-800 leading-tight">
+                          Note: {forgotSmsNotice}
+                        </p>
+                      )}
                     </div>
                   )}
 
