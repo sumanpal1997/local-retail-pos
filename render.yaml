@@ -15,3 +15,8 @@ services:
         generateValue: true
       - key: MONGODB_URI
         sync: false
+      - key: FAST2SMS_API_KEY
+        sync: false
+      - key: TWO_FACTOR_API_KEY
+        sync: false
+

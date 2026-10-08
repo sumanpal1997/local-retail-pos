@@ -10,6 +10,7 @@ import Dashboard from './components/Dashboard';
 import SuperAdminDashboard from './components/SuperAdminDashboard';
 import AIInvoiceScanner from './components/AIInvoiceScanner';
 import ReceiptModal from './components/ReceiptModal';
+import StoreSettingsModal from './components/StoreSettingsModal';
 import { 
   fetchProducts, 
   saveProduct, 
@@ -36,6 +37,9 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState('login');
   const [authModalPlan, setAuthModalPlan] = useState('pro');
+
+  // Settings & Security Modal State
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   // Business Data
   const [products, setProducts] = useState([]);
@@ -206,6 +210,7 @@ export default function App() {
         currentUser={currentUser}
         onLogout={handleLogout}
         onNavigateHome={() => setCurrentView('landing')}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
       />
 
       {/* Main Content Body */}
@@ -304,6 +309,14 @@ export default function App() {
         initialPlan={authModalPlan}
         onClose={() => setIsAuthModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}
+      />
+
+      {/* Store Settings & 2-Step Security Modal */}
+      <StoreSettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        storeInfo={storeInfo}
+        onUpdateStoreInfo={handleUpdateStoreInfo}
       />
     </div>
   );

@@ -1,7 +1,7 @@
 import React from 'react';
 import { ShoppingCart, Package, BookOpen, BarChart3, Store, Sparkles, LogOut, Home, ShieldCheck } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab, storeInfo, currentUser, onLogout, onNavigateHome }) {
+export default function Navbar({ activeTab, setActiveTab, storeInfo, currentUser, onLogout, onNavigateHome, onOpenSettings }) {
   const isSuperAdmin = currentUser?.role === 'superadmin';
 
   const merchantNavItems = [
@@ -114,6 +114,16 @@ export default function Navbar({ activeTab, setActiveTab, storeInfo, currentUser
                 );
               })
             )}
+
+            {/* Settings & 2FA Modal Button */}
+            <button
+              onClick={onOpenSettings}
+              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:text-indigo-600 hover:bg-indigo-50/60 rounded-lg border border-slate-200 transition"
+              title="Store Settings & Two-Step Verification"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="hidden sm:inline">2FA & Settings</span>
+            </button>
 
             {/* Quick Landing Page / Home button */}
             <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>

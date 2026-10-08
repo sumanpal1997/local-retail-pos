@@ -78,6 +78,40 @@ const storeSchema = new mongoose.Schema({
     type: Number,
     default: 799
   },
+  // Two-Step Authentication (SMS OTP via Mobile)
+  isTwoFactorEnabled: {
+    type: Boolean,
+    default: false
+  },
+  twoFactorOtp: {
+    type: String,
+    default: null
+  },
+  twoFactorExpires: {
+    type: Date,
+    default: null
+  },
+  twoFactorAttempts: {
+    type: Number,
+    default: 0
+  },
+  twoFactorTempToken: {
+    type: String,
+    default: null
+  },
+  // Forgot Password Reset via Mobile OTP
+  resetPasswordOtp: {
+    type: String,
+    default: null
+  },
+  resetPasswordExpires: {
+    type: Date,
+    default: null
+  },
+  resetPasswordAttempts: {
+    type: Number,
+    default: 0
+  },
   createdAt: { 
     type: Date, 
     default: Date.now 

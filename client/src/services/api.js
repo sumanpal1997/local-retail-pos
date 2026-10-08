@@ -91,10 +91,132 @@ export const loginUser = async ({ email, password }) => {
   if (!res.ok) {
     throw new Error(data.message || 'Login failed');
   }
+  // If 2FA is required, return challenge details without setting token yet
+  if (data.twoFactorRequired) {
+    return data;
+  }
   if (data.token && data.store) {
     localStorage.setItem(AUTH_TOKEN_KEY, data.token);
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.store));
     localStorage.setItem(LOCAL_STORAGE_KEY_STORE, JSON.stringify(data.store));
+  }
+  return data;
+};
+
+export const verifyTwoFactorOtp = async ({ tempToken, otp }) => {
+  const res = await fetch(apiUrl('/api/auth/verify-2fa'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tempToken, otp })
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Verification failed');
+  }
+  if (data.token && data.store) {
+    localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.store));
+    localStorage.setItem(LOCAL_STORAGE_KEY_STORE, JSON.stringify(data.store));
+  }
+  return data;
+};
+
+export const resendTwoFactorOtp = async ({ tempToken }) => {
+  const res = await fetch(apiUrl('/api/auth/resend-2fa-otp'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tempToken })
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to resend code');
+  }
+  return data;
+};
+
+export const requestPasswordReset = async ({ identifier }) => {
+  const res = await fetch(apiUrl('/api/auth/forgot-password'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ identifier })
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to request reset code');
+  }
+  return data;
+};
+
+export const verifyPasswordResetOtp = async ({ identifier, otp }) => {
+  const res = await fetch(apiUrl('/api/auth/verify-reset-otp'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ identifier, otp })
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Invalid verification code');
+  }
+  return data;
+};
+
+export const resetPasswordWithOtp = async ({ identifier, otp, newPassword }) => {
+  const res = await fetch(apiUrl('/api/auth/reset-password'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ identifier, otp, newPassword })
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to reset password');
+  }
+  return data;
+};
+
+export const requestTwoFactorSetup = async () => {
+  const res = await fetch(apiUrl('/api/auth/2fa/request-setup'), {
+    method: 'POST',
+    headers: getAuthHeaders()
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to request 2FA setup');
+  }
+  return data;
+};
+
+export const confirmTwoFactorEnable = async ({ otp }) => {
+  const res = await fetch(apiUrl('/api/auth/2fa/confirm-enable'), {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ otp })
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to enable Two-Step Authentication');
+  }
+  if (data.store) {
+    const curr = getCurrentUser() || {};
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify({ ...curr, ...data.store }));
+    localStorage.setItem(LOCAL_STORAGE_KEY_STORE, JSON.stringify({ ...curr, ...data.store }));
+  }
+  return data;
+};
+
+export const disableTwoFactor = async ({ password }) => {
+  const res = await fetch(apiUrl('/api/auth/2fa/disable'), {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ password })
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to disable Two-Step Authentication');
+  }
+  if (data.store) {
+    const curr = getCurrentUser() || {};
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify({ ...curr, ...data.store }));
+    localStorage.setItem(LOCAL_STORAGE_KEY_STORE, JSON.stringify({ ...curr, ...data.store }));
   }
   return data;
 };
